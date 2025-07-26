@@ -1,6 +1,5 @@
 import os
 
-from IPython.display import Image, display
 from dotenv import load_dotenv
 from langchain_core.messages import ToolMessage
 from langchain.chat_models import init_chat_model
@@ -71,7 +70,7 @@ graph = graph_builder.compile()
 
 # Display the graph
 try:
-    display(Image(graph.get_graph().draw_mermaid_png()))
+    print(graph.get_graph().draw_ascii())
 except Exception:
     pass
 

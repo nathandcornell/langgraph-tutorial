@@ -32,6 +32,29 @@ To start the chatbot, just run
 uv run ./chatbot.py
 ```
 
+It will draw the current graph, and greet you with an input prompt
+
+*Example*:
+```
+$ uv run ./chatbot.py
+        +-----------+
+        | __start__ |
+        +-----------+
+               *
+               *
+               *
+          +---------+
+          | chatbot |
+          +---------+
+          .         .
+        ..           ..
+       .               .
++---------+         +-------+
+| __end__ |         | tools |
++---------+         +-------+
+User: 
+```
+
 ### Quit
 At the `User: ` prompt, type 'q', 'quit', or 'exit'
 
