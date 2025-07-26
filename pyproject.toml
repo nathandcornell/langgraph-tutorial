@@ -1,0 +1,13 @@
+[project]
+name = "langgraph-tutorial"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "dotenv>=0.9.9",
+    "ipython>=9.4.0",
+    "langchain[anthropic]>=0.3.27",
+    "langgraph>=0.5.4",
+    "langsmith>=0.4.8",
+]
