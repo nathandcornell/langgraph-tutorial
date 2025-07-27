@@ -1,9 +1,12 @@
+import json
 import os
+import uuid
 
 from dotenv import load_dotenv
-from langchain_core.messages import ToolMessage
+from langchain_core.runnables import RunnableConfig
 from langchain.chat_models import init_chat_model
 from langchain_tavily import TavilySearch
+from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
@@ -25,6 +28,9 @@ class State(TypedDict):
     # (in this case it appends messages to the list, rather than
     # overwriting them)
     messages: Annotated[list, add_messages]
+
+# Initialize our "memory"
+memory = InMemorySaver()
 
 # Initialize our graph builder
 graph_builder = StateGraph(State)
@@ -66,31 +72,59 @@ graph_builder.add_edge("tools", "chatbot")
 graph_builder.add_edge("chatbot", END)
 
 # Compile the graph
-graph = graph_builder.compile()
+graph = graph_builder.compile(checkpointer = memory)
+
+# Set a thread id:
+thread_id = uuid.uuid4()
+config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
 
 # Display the graph
 try:
-    print(graph.get_graph().draw_ascii())
+    print(graph.get_graph().draw_ascii() + "\n")
 except Exception:
     pass
 
+# Print the thread id:
+print(f"Thread id: ${thread_id}\n")
+
 def stream_graph_updates(user_input: str):
-    for event in graph.stream({"messages": [{"role": "user", "content": user_input}]}):
-        for value in event.values():
-            if DEBUG:
-                print(f"\nDebug: {value}\n")
-            msg = ""
+    events = graph.stream(
+        {"messages": [{"role": "user", "content": user_input}]},
+        config,
+        stream_mode = "values"
+    )
 
-            if isinstance(value["messages"][-1], ToolMessage):
-                continue
-            elif isinstance(value["messages"][-1].content, list):
-                msg = value["messages"][-1].content[0]["text"]
-            elif isinstance(value["messages"][-1].content, str):
-                msg = value["messages"][-1].content
+    for event in events:
+        if DEBUG:
+            print(f"\nDEBUG event: {event}\n")
+
+        message = event["messages"][-1]
+
+        if DEBUG:
+            print(f"\nDEBUG message: {message}\n")
+
+        if message.__class__.__name__ == "HumanMessage":
+            print("================================ Human Message =================================\n")
+            print(message.content)
+        elif message.__class__.__name__ == "AIMessage":
+            print("================================== AI Message ==================================\n")
+            if isinstance(message.content, list):
+                print(message.content[0]["text"])
             else:
-                continue
+                print(message.content)
+        elif message.__class__.__name__ == "ToolMessage":
+            content = json.loads(message.content)
 
-            print(f"Assistant: {msg}\n")
+            if DEBUG:
+                print(f"\nDEBUG tool content: {content}\n")
+
+            print("================================= Tool Message =================================\n")
+            print(f"name: {message.name}")
+            print(f"query: {content['query']}")
+        else:
+            message.pretty_print()
+
+        print("\n")
 
 while True:
     try:
@@ -99,6 +133,10 @@ while True:
             print("Goodbye!")
             break
         stream_graph_updates(user_input)
+
+        if DEBUG:
+            snapshot = graph.get_state(config)
+            print(f"\nDEBUG: State snapshot: {snapshot}\n")
     except:
         # fallback if input() is unavailable
         user_input = "What do you know about LangGraph?"

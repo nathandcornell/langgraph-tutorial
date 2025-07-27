@@ -66,68 +66,148 @@ Goodbye!
 
 ### Using the chatbot
 At the `User: ` prompt, type any question or comment in natural language.
+It will be echoed under a 'Human Message' heading.
 
-Bot responses will be returned at the `Assistant: ` prompts and may kick off a
-web search using [Tavily Search](https://www.tavily.com/).
+Bot responses will be returned as 'AI Message' and may kick off a
+web search tool using [Tavily Search](https://www.tavily.com/).
+
+Tool calls will include the tool name and query string.
+
+A random thread ID will be generated and can be used to restore the context
+from memory to be fed back into the LLM. This allows the LLM to maintain a
+memory of the conversation so far (up to the context window limits).
+
+Quitting will erase the in-memory storage, and a new id will be generated on
+the next run.
 
 *Example*:
 ```
-User: Ho there, brave friend!
-Assistant:  *Gives a friendly wave* Well met! How can I assist you on this fine day?
+User: Ho there, brave friend! I'm Nate!
+================================ Human Message =================================
+
+Ho there, brave friend! I'm Nate!
+
+================================== Ai Message ==================================
+
+Hi Nate! Welcome! I notice you're using a somewhat playful,
+medieval/fantasy-style greeting. I'm happy to chat with you, but I want to
+ensure you know that I'm an AI assistant focused on helping you find
+information using search and research tools. How can I help you today?
 ```
 
 *Example with web search*:
 ```
 User: What's the world record for beer consumption?
-Assistant: Let me search for information about the world record for beer consumption.
+================================ Human Message =================================
 
-Assistant: Let me search for more specific details about this record.
+What's the world record for beer consumption?
 
-Assistant: Based on the search results, I can tell you about the most famous verified beer consumption record:
+================================== Ai Message ==================================
 
-André the Giant (André Rene Roussimoff) holds what is considered to be the record for most beer consumed in a single sitting. The most commonly cited instance occurred in 1976 at a Pennsylvania pub, where he reportedly consumed 119 beers in a six-hour period. Each beer was 12 ounces, meaning he drank approximately one beer every three minutes.
+Let me search for information about beer consumption records.
 
-It's worth noting that André the Giant was a unique case - he was billed at 7 feet 4 inches tall and weighed over 500 pounds. In a 1984 appearance on "Late Night with David Letterman," André himself confirmed drinking 117 beers in one sitting, though this may have been a different occasion.
+================================= Tool Message =================================
 
-It's important to note that attempting to break this kind of record would be extremely dangerous and potentially lethal for most people. Such extreme alcohol consumption can lead to severe health consequences including alcohol poisoning and death.
+name: tavily_search
+query: guinness world record most beer consumed individual record
+
+================================== Ai Message ==================================
+
+Let me search for some additional verification of this information.
+
+================================= Tool Message =================================
+
+name: tavily_search
+query: official guinness world record beer drinking single sitting most beers
+
+================================== Ai Message ==================================
+
+I should note something important: While there are various claims about beer
+consumption records, Guinness World Records generally doesn't officially
+recognize records for alcohol consumption anymore due to health and safety
+concerns. However, I can share some notable historical claims:
+
+1. One of the most famous claims involves André the Giant, who reportedly
+consumed 119 beers during a six-hour period in 1976 at a pub in
+Pennsylvania. He also confirmed drinking 117 beers in one sitting during a
+1984 appearance on "Late Night with David Letterman."
+
+2. For beer-related records that are officially recognized, they tend to
+focus on safer activities, such as:
+- Oliver Streumpfel's record for carrying 27 one-liter mugs of beer over a
+distance of 40 meters
+- Various speed-drinking records for non-alcoholic beer
+
+It's important to note that consuming large amounts of alcohol is extremely
+dangerous and can be fatal. These historical accounts should not be viewed
+as achievements to aspire to, as they represent serious health risks. If
+you're interested in beer-related records, I'd encourage focusing on safer
+aspects like brewing achievements or collection records instead.
+```
+
+*Example testing memory*:
+```
+User: I've forgotten my name. Can you remind me?
+================================ Human Message =================================
+
+I've forgotten my name. Can you remind me?
+
+
+================================== Ai Message ==================================
+
+You introduced yourself as Nate in your earlier message when you said "Ho
+there, brave friend! I'm Nate!"
 ```
 
 If you don't type anything, but press the return key, it will ask about
 LangGraph on your behalf, which will kick off a web search.
+It will quit after responding to the canned query.
 
 *Example*:
 ```
 User:
+================================ Human Message =================================
+
+
+
+
 User: What do you know about LangGraph?
-Assistant: Let me search for information about LangGraph.
 
-Assistant: Based on the search results, I can provide you with comprehensive information about LangGraph:
+================================ Human Message =================================
 
-LangGraph is an open-source AI agent framework that was created by LangChain and is designed to build, deploy, and manage complex generative AI agent workflows. Here are the key points about LangGraph:
+What do you know about LangGraph?
 
-1. Core Purpose:
-- It provides a framework for defining, coordinating, and executing multiple LLM agents (or chains) in a structured and efficient manner
-- It's specifically designed for creating stateful, multi-agent systems
-- Uses graph-based architectures to model and manage relationships between various components of an AI agent workflow
+================================== AI Message ==================================
 
-2. Key Features:
-- State Management: Unlike traditional LangChain, LangGraph has persistent state features, making it ideal for applications that need to remember past interactions
-- Transparency: It illuminates the processes within an AI workflow, allowing full visibility of the agent's state
-- Node-based Architecture: Uses nodes to represent individual components or agents within an AI workflow
-- Enhanced Decision-making: Models complex relationships between nodes and uses AI agents to analyze their past actions and feedback
+Let me search for information about LangGraph.
 
-3. Main Benefits:
-- Simplifies the development of complex LLM applications
-- Allows developers to focus on high-level logic rather than agent coordination details
-- Provides structured framework for managing state and coordinating agent interactions
-- Offers versatile platform for developing various AI solutions including chatbots, state graphs, and agent-based systems
+================================= Tool Message =================================
 
-4. Use Cases:
-- Best suited for applications that need to:
-  - Remember past interactions
-  - Use historical information for future decisions
-  - Handle complex, stateful workflows
-  - Coordinate multiple AI agents
-  - Manage dynamic workflow adjustments based on past interactions
+name: tavily_search
+query: LangGraph framework Python what is it how does it work
 
-LangGraph is part of the larger LangChain ecosystem but serves a distinct purpose, particularly when it comes to handling stateful, complex agent interactions and workflows. It's particularly valuable when building applications that require persistent memory and sophisticated agent coordination.```
+...
+..
+.
+```
+
+### Debugging
+To debug the interactions, simply change the `DEBUG` constant to `True`
+
+*Example*:
+```
+User: What's the longest anyone has ever swam?
+
+DEBUG event: {'messages': [HumanMessage(content="What's the longest anyone has ever swam?", additional_kwargs={}, response_metadata={}, id='fc22edd7-4d49-4ab6-b980-e228604e1f7b')]}
+
+DEBUG message: content="What's the longest anyone has ever swam?" additional_kwargs={} response_metadata={} id='fc22edd7-4d49-4ab6-b980-e228604e1f7b'
+
+================================ Human Message =================================
+
+What's the longest anyone has ever swam?
+
+DEBUG event: {'messages': [HumanMessage(content="What's the longest anyone has ever swam?", additional_kwargs={}, response_metadata={}, id='fc22edd7-4d49-4ab6-b980-e228604e1f7b'), AIMessage(content=[{'text': 'Let me search for information about the longest swimming records.', 'type': 'text'}, {'id': 'toolu_01VPkKQv8Sm9DtNvDeRbPTaF', 'input': {'query': 'longest swimming record distance ever swam by a person'}, 'name': 'tavily_search', 'type': 'tool_use'}], additional_kwargs={}, response_metadata={'id': 'msg_017NLLGB3wJi2LEDxoZazbBe', 'model': 'claude-3-5-sonnet-20241022', 'stop_reason': 'tool_use', 'stop_sequence': None, 'usage': {'cache_creation_input_tokens': 0, 'cache_read_input_tokens': 0, 'input_tokens': 2127, 'output_tokens': 75, 'server_tool_use': None, 'service_tier': 'standard'}, 'model_name': 'claude-3-5-sonnet-20241022'}, id='run--3fbb2d80-f1e5-4f05-91ef-dc3960249851-0', tool_calls=[{'name': 'tavily_search', 'args': {'query': 'longest swimming record distance ever swam by a person'}, 'id': 'toolu_01VPkKQv8Sm9DtNvDeRbPTaF', 'type': 'tool_call'}], usage_metadata={'input_tokens': 2127, 'output_tokens': 75, 'total_tokens': 2202, 'input_token_details': {'cache_read': 0, 'cache_creation': 0}})]}
+
+
+DEBUG message: content=[{'text': 'Let me search for information about the longest swimming records.', 'type': 'text'}, {'id': 'toolu_01VPkKQv8Sm9DtNvDeRbPTaF', 'input': {'query': 'longest swimming record distance ever swam by a person'}, 'name': 'tavily_search', 'type': 'tool_use'}] additional_kwargs={} response_metadata={'id': 'msg_017NLLGB3wJi2LEDxoZazbBe', 'model': 'claude-3-5-sonnet-20241022', 'stop_reason': 'tool_use', 'stop_sequence': None, 'usage': {'cache_creation_input_tokens': 0, 'cache_read_input_tokens': 0, 'input_tokens': 2127, 'output_tokens': 75, 'server_tool_use': None, 'service_tier': 'standard'}, 'model_name': 'claude-3-5-sonnet-20241022'} id='run--3fbb2d80-f1e5-4f05-91ef-dc3960249851-0' tool_calls=[{'name': 'tavily_search', 'args': {'query': 'longest swimming record distance ever swam by a person'}, 'id': 'toolu_01VPkKQv8Sm9DtNvDeRbPTaF', 'type': 'tool_call'}] usage_metadata={'input_tokens': 2127, 'output_tokens': 75, 'total_tokens': 2202, 'input_token_details': {'cache_read': 0, 'cache_creation': 0}}
+```
